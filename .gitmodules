@@ -1,0 +1,3 @@
+[submodule "keypirinha-sdk"]
+	path = keypirinha-sdk
+	url = https://github.com/Keypirinha/SDK
