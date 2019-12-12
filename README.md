@@ -29,6 +29,8 @@ clipboard.
 By default the snippets item is invoked by the keyword `snip`. This keyword
 can be customized in the configuration for the plugin.
 
+New snippets can be added in the plugin's configuration file.
+
 ## License
 
 This package is distributed under the terms of the MIT license.
