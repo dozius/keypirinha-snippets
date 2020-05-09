@@ -1,23 +1,24 @@
 # Keypirinha Plugin: Snippets
 
-This is Snippets, a plugin for the
-[Keypirinha](http://keypirinha.com) launcher.
-
-A simple plugin to quickly copy user defined snippets to the clipboard.
+A [Keypirinha](http://keypirinha.com) plugin to quickly copy user defined
+snippets to the clipboard.
 
 [![Download Latest](https://img.shields.io/badge/download-latest-green.svg)](https://github.com/dozius/keypirinha-snippets/releases/latest)
 [![Github All Releases](https://img.shields.io/github/downloads/dozius/keypirinha-snippets/total.svg)](https://github.com/dozius/keypirinha-snippets/releases/latest)
 [![Donate](https://img.shields.io/badge/donate-paypal-blue.svg)](https://www.paypal.me/cisc)
 
-## Install
+## Installation
 
-Once the `Snippets.keypirinha-package` file is installed,
-move it to the `InstalledPackage` folder located at:
+### With [PackageControl](https://github.com/ueffel/Keypirinha-PackageControl)
 
-* `Keypirinha\portable\Profile\InstalledPackages` in **Portable mode**
-* **Or** `%APPDATA%\Keypirinha\InstalledPackages` in **Installed mode** (the
-  final path would look like
-  `C:\Users\%USERNAME%\AppData\Roaming\Keypirinha\InstalledPackages`)
+Install Package "keypirinha-snippets"
+
+### Manually
+
+* Download `Snippets.keypirinha-package` from the
+[releases](https://github.com/dozius/keypirinha-snippets/releases/latest) page.
+* Copy the file into `%APPDATA%\Keypirinha\InstalledPackages` (installed mode) or
+  `<Keypirinha_Home>\portable\Profile\InstalledPackages` (portable mode)
 
 ## Usage
 
@@ -26,8 +27,8 @@ A snippets item is added to the
 list and search all user defined snippets. Selecting a snippet copies it to the
 clipboard.
 
-By default the snippets item is invoked by the keyword `snip`. This keyword
-can be customized in the configuration for the plugin.
+By default the snippets item is invoked by the keyword `snip`. This keyword can
+be customized in the configuration for the plugin.
 
 New snippets can be added in the plugin's configuration file.
 
