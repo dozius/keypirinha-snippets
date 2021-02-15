@@ -4,16 +4,24 @@ import keypirinha as kp
 import keypirinha_util as kpu
 import keypirinha_net as kpnet
 
+
+def get_path_as_list(path):
+    return path.split("/")
+
+
+def get_path_from_section(section):
+    return section[9:]
+
+
 class Snippets(kp.Plugin):
     """
     Quickly copy user defined snippets to the clipboard.
     """
-    DEFAULT_KEYWORD = "snip"
-    CONFIG_SECTION_SNIPPETS = "snippet"
+
+    SNIPPETS = "snippets"
     ITEMCAT_RESULT = kp.ItemCategory.USER_BASE + 1
 
-    keyword = DEFAULT_KEYWORD
-    snippets = []
+    structure = {}
 
     def __init__(self):
         super().__init__()
@@ -22,30 +30,65 @@ class Snippets(kp.Plugin):
         self._read_config()
 
     def on_catalog(self):
-        self.set_catalog([self.create_item(
-            category = kp.ItemCategory.KEYWORD,
-            label = self.keyword,
-            short_desc = "Copy a snippet to the clipboard",
-            target = self.keyword,
-            args_hint = kp.ItemArgsHint.REQUIRED,
-            hit_hint = kp.ItemHitHint.NOARGS)])
+        catalog = []
+
+        for root_node in self.structure.keys():
+            if root_node != self.SNIPPETS:
+                catalog.append(
+                    self.create_item(
+                        category=kp.ItemCategory.REFERENCE,
+                        label=root_node,
+                        short_desc=root_node + " " + self.SNIPPETS,
+                        target=root_node,
+                        args_hint=kp.ItemArgsHint.REQUIRED,
+                        hit_hint=kp.ItemHitHint.NOARGS,
+                    )
+                )
+            else:
+                catalog += self.structure[self.SNIPPETS][self.SNIPPETS]
+
+        self.set_catalog(catalog)
 
     def on_suggest(self, user_input, items_chain):
         if not items_chain:
             return
 
         if items_chain and (
-                items_chain[0].category() != kp.ItemCategory.KEYWORD or
-                items_chain[0].target() != self.keyword):
+            items_chain[0].category() != kp.ItemCategory.REFERENCE
+            or items_chain[0].target() not in self.structure.keys()
+        ):
             return
+
+        path = [node.label() for node in items_chain]
+
+        structure_ref = self.get_node_from_structure(path)
+        nodes = structure_ref.keys()
+
+        suggestions = []
+
+        for node in nodes:
+            if node != self.SNIPPETS:
+                suggestions.append(
+                    self.create_item(
+                        category=kp.ItemCategory.REFERENCE,
+                        label=node,
+                        short_desc=node + " " + self.SNIPPETS,
+                        target=node,
+                        args_hint=kp.ItemArgsHint.REQUIRED,
+                        hit_hint=kp.ItemHitHint.NOARGS,
+                    )
+                )
+
+        if self.SNIPPETS in nodes:
+            suggestions += structure_ref[self.SNIPPETS]
 
         user_input = user_input.strip()
 
         self.set_suggestions(
-            self.snippets,
+            suggestions,
             kp.Match.ANY if not user_input else kp.Match.FUZZY,
-            kp.Sort.LABEL_ASC if not user_input else kp.Sort.SCORE_DESC)
-
+            kp.Sort.NONE if not user_input else kp.Sort.SCORE_DESC,
+        )
 
     def on_execute(self, item, action):
         if item and item.category() == self.ITEMCAT_RESULT:
@@ -63,34 +106,81 @@ class Snippets(kp.Plugin):
             self.on_catalog()
 
     def _read_config(self):
-        self.snippets.clear()
         settings = self.load_settings()
 
-        self.keyword = settings.get("keyword", section = "main", fallback = self.DEFAULT_KEYWORD)
+        sections = [
+            section
+            for section in settings.sections()
+            if section.lower().startswith(self.SNIPPETS)
+        ]
 
-        for section in settings.sections():
-            if section.lower().startswith(self.CONFIG_SECTION_SNIPPETS + "/"):
-                snippet_label = section[len(self.CONFIG_SECTION_SNIPPETS) + 1:].strip()
-            else:
-                continue
+        data = {}
 
-            if not len(snippet_label):
-                self.warn('Ignoring empty snippet name (section "{}").'.format(section))
-                continue
+        for section in sections:
+            path = get_path_from_section(section)
 
-            if any(x.label().lower() == snippet_label.lower() for x in self.snippets):
-                self.warn('Ignoring duplicated snippet "{}" defined in section "{}".'.format(snippet_label, section))
-                continue
+            data[path] = {}
 
-            snippet_string = settings.get("string", section = section)
-            if not len(snippet_string):
-                self.warn('Snippet "{}" does not have "string" value (or is empty). Ignored.'.format(snippet_label))
-                continue
+            snippets = settings.keys(section)
+            for snippet_key in snippets:
+                snippet_string = settings.get(snippet_key, section=section)
+                if not len(snippet_string):
+                    self.warn(
+                        'Snippet "{}" does not have "string" value (or is empty). Ignored.'.format(
+                            snippet_key
+                        )
+                    )
+                    continue
 
-            self.snippets.append(self.create_item(
-                category = self.ITEMCAT_RESULT,
-                label = snippet_label,
-                short_desc = snippet_string,
-                target = snippet_string,
-                args_hint = kp.ItemArgsHint.FORBIDDEN,
-                hit_hint = kp.ItemHitHint.IGNORE))
+                data[path][snippet_key] = snippet_string
+
+        self.generate_folder_structure(data)
+
+    def get_node_from_structure(self, path):
+        structure_ref = self.structure
+        for node in path:
+            structure_ref = structure_ref[node]
+        return structure_ref
+
+    def set_node_in_structure(self, path, value):
+        structure_ref = self.structure
+        for node in path[:-1]:
+            structure_ref = structure_ref.setdefault(node, {})
+        structure_ref[path[-1]] = value
+
+    def generate_folder_structure(self, data):
+        self.structure.clear()
+        self.add_path_to_structure(get_path_as_list(path) for path in data.keys())
+
+        for path, snippets in data.items():
+            path = get_path_as_list(path)
+
+            self.set_node_in_structure(
+                path, {self.SNIPPETS: self.create_result_set(snippets)}
+            )
+
+    def add_path_to_structure(self, paths):
+        for path in paths:
+            structure_ref = self.structure
+            for node in path:
+                if node not in structure_ref:
+                    structure_ref[node] = {}
+                structure_ref = structure_ref[node]
+
+    def create_result_set(self, snippets):
+        results = []
+
+        for label, snippet in snippets.items():
+            short_description = snippet.replace("\n", "↵")
+            results.append(
+                self.create_item(
+                    category=self.ITEMCAT_RESULT,
+                    label=label,
+                    short_desc=short_description,
+                    target=snippet,
+                    args_hint=kp.ItemArgsHint.FORBIDDEN,
+                    hit_hint=kp.ItemHitHint.IGNORE,
+                )
+            )
+
+        return results
