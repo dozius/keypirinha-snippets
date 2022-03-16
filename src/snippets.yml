@@ -1,0 +1,24 @@
+# Snippets
+#
+# * The plugin is triggered when you start typing any of the root keywords
+#   defined in this file.
+# * All defined snippets will appear as ordered in this yaml document.
+#
+# * Examples:
+
+Examples: # This is a root level 'directory' that holds the indented snippets
+          # below, indentation is important (whitespace is ignored unless it's
+          # part of a multiline string)
+
+  Multiline string: | # This is a multiline snippet, defined by '|'
+    This is
+    A multiline
+    Snippet
+
+  Text emojis: # This is a 'sub-directory' of 'Examples' that contains snippets
+    shrug: ¯\_(ツ)_/¯
+    bear: ʕ•ᴥ•ʔ
+
+# Basic snippets, not in the 'Examples' directory 
+root_string_1: This string is not hidden behind any menu or keyword
+root_string_2: This string is also not hidden and easily accessible

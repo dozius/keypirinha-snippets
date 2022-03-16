@@ -9,10 +9,10 @@ if (Test-Path .\build) {
 New-Item -Path .\build -ItemType Directory
 
 $compress = @{
-    Path = ".\src\*.*", ".\LICENSE", ".\README.md"
+    Path = ".\src\*", ".\LICENSE", ".\README.md"
     CompressionLevel = "Optimal"
-    DestinationPath = ".\build\Snippets.zip"
+    DestinationPath = ".\build\snippets.zip"
 }
 
 Compress-Archive @compress
-Rename-Item .\build\Snippets.zip Snippets.keypirinha-package
+Rename-Item .\build\snippets.zip snippets.keypirinha-package
